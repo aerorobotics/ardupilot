@@ -1105,6 +1105,10 @@ function motors:get_desired_spool_state() end
 ---@return number
 function motors:get_yaw_ff() end
 
+-- set yaw FF out
+---@param feedforward_term number
+function motors:set_yaw_ff(feedforward_term) end
+
 -- get yaw P+I+D
 ---@return number
 function motors:get_yaw() end
@@ -1113,6 +1117,10 @@ function motors:get_yaw() end
 ---@return number
 function motors:get_pitch_ff() end
 
+-- set pitch FF out
+---@param feedforward_term number
+function motors:set_pitch_ff(feedfoward_term) end
+
 -- get pitch P+I+D out
 ---@return number
 function motors:get_pitch() end
@@ -1120,6 +1128,10 @@ function motors:get_pitch() end
 -- get roll FF out
 ---@return number
 function motors:get_roll_ff() end
+
+-- set roll FF out
+---@param feedforward_term number
+function motors:set_roll_ff(feedforward_term) end
 
 -- get roll P+I+D
 ---@return number

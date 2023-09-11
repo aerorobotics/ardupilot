@@ -260,10 +260,17 @@ float AC_PID::get_d() const
     return _kd * _derivative;
 }
 
+void AC_PID::set_ff(float FF)
+{
+    _pid_info.FF = FF;
+    return;
+}
+
 float AC_PID::get_ff()
 {
-    _pid_info.FF = _target * _kff;
-    return _target * _kff;
+    //_pid_info.FF = _target * _kff;
+    //return _target * _kff;
+    return (_pid_info.FF);
 }
 
 void AC_PID::reset_I()

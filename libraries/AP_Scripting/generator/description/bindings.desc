@@ -554,10 +554,13 @@ singleton AP::motors() method get_interlock boolean
 singleton AP::motors() method get_desired_spool_state uint8_t
 singleton AP::motors() method get_roll float
 singleton AP::motors() method get_roll_ff float
+singleton AP::motors() method set_roll_ff void float -0.2 0.2
 singleton AP::motors() method get_pitch float
 singleton AP::motors() method get_pitch_ff float
+singleton AP::motors() method set_pitch_ff void float -0.2 0.2
 singleton AP::motors() method get_yaw float
 singleton AP::motors() method get_yaw_ff float
+singleton AP::motors() method set_yaw_ff void float -0.2 0.2
 singleton AP::motors() method get_throttle float
 singleton AP::motors() method get_forward float
 singleton AP::motors() method get_lateral float

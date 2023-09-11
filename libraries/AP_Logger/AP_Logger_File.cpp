@@ -869,6 +869,10 @@ void AP_Logger_File::start_new_log(void)
     if (!write_lastlog_file(log_num)) {
         _open_error_ms = AP_HAL::millis();
     }
+
+    // Update GCS
+    GCS_SEND_TEXT(MAV_SEVERITY_INFO, "Openend %s", _write_filename);
+
 }
 
 /*

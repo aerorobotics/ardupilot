@@ -53,6 +53,8 @@ public:
     float get_d() const;
     float get_ff();
 
+    void set_ff(float);
+
     // reset_I - reset the integrator
     void reset_I();
 
