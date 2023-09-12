@@ -1174,8 +1174,13 @@ float AC_PosControl::crosstrack_error() const
 void AC_PosControl::accel_to_lean_angles(float accel_x_cmss, float accel_y_cmss, float& roll_target, float& pitch_target) const
 {
     // rotate accelerations into body forward-right frame
-    const float accel_forward = accel_x_cmss * _ahrs.cos_yaw() + accel_y_cmss * _ahrs.sin_yaw();
-    const float accel_right = -accel_x_cmss * _ahrs.sin_yaw() + accel_y_cmss * _ahrs.cos_yaw();
+    float accel_forward = accel_x_cmss * _ahrs.cos_yaw() + accel_y_cmss * _ahrs.sin_yaw();
+    float accel_right = -accel_x_cmss * _ahrs.sin_yaw() + accel_y_cmss * _ahrs.cos_yaw();
+
+    // add feed forward from NFFT
+    //  TODO: How could we log this?
+    accel_forward += _accel_foward_ff_cmss;
+    accel_right += _accel_right_ff_cmss;
 
     // update angle targets that will be passed to stabilize controller
     pitch_target = accel_to_angle(-accel_forward * 0.01) * 100;

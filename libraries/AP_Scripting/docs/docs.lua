@@ -2652,6 +2652,18 @@ AR_PosControl = {}
 function AR_PosControl:get_srate() end
 
 -- desc
+---@class AC_PosControl
+AC_PosControl = {}
+
+-- set acceleration FF in forward direction
+---@param feedforward_term number
+function AC_PosControl:set_accel_forward_ff(feedforward_term) end
+
+-- set acceleration FF in forward direction
+---@param feedforward_term number
+function AC_PosControl:set_accel_right_ff(feedforward_term) end
+
+-- desc
 ---@class follow
 follow = {}
 
