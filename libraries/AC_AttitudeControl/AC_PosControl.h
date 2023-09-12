@@ -40,9 +40,11 @@ public:
     /// Constructor
     AC_PosControl(AP_AHRS_View& ahrs, const AP_InertialNav& inav,
                   const class AP_Motors& motors, AC_AttitudeControl& attitude_control);
-
-
-
+          
+    static AC_PosControl *get_singleton(void) {
+        return _singleton;
+    }         
+    
     /// set_dt / get_dt - dt is the time since the last time the position controllers were updated
     ///   _dt should be set based on the time of the last IMU read used by these controllers
     ///   the position controller should run updates for active controllers on each loop to ensure normal operation
@@ -397,6 +399,8 @@ public:
     float get_z_accel_cmss() const { return -(_ahrs.get_accel_ef().z + GRAVITY_MSS) * 100.0f; }
 
     static const struct AP_Param::GroupInfo var_info[];
+
+    static AC_PosControl *_singleton;
 
 protected:
 

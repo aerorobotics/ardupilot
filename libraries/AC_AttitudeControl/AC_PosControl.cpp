@@ -74,6 +74,8 @@ extern const AP_HAL::HAL& hal;
 #define POSCONTROL_VIBE_COMP_P_GAIN 0.250f
 #define POSCONTROL_VIBE_COMP_I_GAIN 0.125f
 
+AC_PosControl *AC_PosControl::_singleton;
+
 const AP_Param::GroupInfo AC_PosControl::var_info[] = {
     // 0 was used for HOVER
 
@@ -300,6 +302,7 @@ const AP_Param::GroupInfo AC_PosControl::var_info[] = {
 // Note that the Vector/Matrix constructors already implicitly zero
 // their values.
 //
+
 AC_PosControl::AC_PosControl(AP_AHRS_View& ahrs, const AP_InertialNav& inav,
                              const AP_Motors& motors, AC_AttitudeControl& attitude_control) :
     _ahrs(ahrs),
@@ -319,6 +322,10 @@ AC_PosControl::AC_PosControl(AP_AHRS_View& ahrs, const AP_InertialNav& inav,
     _jerk_max_xy_cmsss(POSCONTROL_JERK_XY * 100.0),
     _jerk_max_z_cmsss(POSCONTROL_JERK_Z * 100.0)
 {
+    if (_singleton != nullptr) {
+            AP_HAL::panic("Can only be one AC_PosControl");
+    }
+    _singleton = this;
     AP_Param::setup_object_defaults(this, var_info);
 }
 
