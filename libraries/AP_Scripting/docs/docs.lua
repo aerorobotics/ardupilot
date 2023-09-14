@@ -2653,15 +2653,23 @@ function AR_PosControl:get_srate() end
 
 -- desc
 ---@class pos_control
-poscontrol = {}
+pos_control = {}
 
 -- set acceleration FF in forward direction
 ---@param feedforward_term number
 function pos_control:set_accel_forward_ff(feedforward_term) end
 
--- set acceleration FF in forward direction
+-- set acceleration FF in right direction
 ---@param feedforward_term number
 function pos_control:set_accel_right_ff(feedforward_term) end
+
+-- get acceleration FF in forward direction
+---@return number
+function pos_control:get_accel_forward_ff() end
+
+-- get acceleration FF in right direction
+---@return number
+function pos_control:get_accel_right_ff() end
 
 -- desc
 ---@class follow

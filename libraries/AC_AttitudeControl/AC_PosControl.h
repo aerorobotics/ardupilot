@@ -247,8 +247,14 @@ public:
     void set_pos_vel_accel(const Vector3p& pos, const Vector3f& vel, const Vector3f& accel);
     void set_pos_vel_accel_xy(const Vector2p& pos, const Vector2f& vel, const Vector2f& accel);
 
-    void set_accel_forward_ff(float feedfoward) {_accel_foward_ff_cmss = feedfoward/100.0f; }
-    void set_accel_right_ff(float feedfoward) {_accel_right_ff_cmss = feedfoward/100.0f; }
+    /// set feedforward terms
+    void set_accel_forward_ff(float feedfoward) {_accel_foward_ff_cmss = feedfoward * 100.0f; }
+    void set_accel_right_ff(float feedfoward) {_accel_right_ff_cmss = feedfoward * 100.0f; }
+    
+    /// get feedforward terms
+    float get_accel_forward_ff() {return _accel_foward_ff_cmss / 100.0f; }
+    float get_accel_right_ff() {return _accel_right_ff_cmss / 100.0f; }
+
 
     /// Position
 
