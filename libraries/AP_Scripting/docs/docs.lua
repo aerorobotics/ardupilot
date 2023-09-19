@@ -2657,19 +2657,19 @@ pos_control = {}
 
 -- set acceleration FF in forward direction
 ---@param feedforward_term number
-function pos_control:set_accel_forward_ff(feedforward_term) end
+function pos_control:set_accel_N_ff(feedforward_term) end
 
 -- set acceleration FF in right direction
 ---@param feedforward_term number
-function pos_control:set_accel_right_ff(feedforward_term) end
+function pos_control:set_accel_E_ff(feedforward_term) end
 
 -- get acceleration FF in forward direction
 ---@return number
-function pos_control:get_accel_forward_ff() end
+function pos_control:get_accel_N_ff() end
 
 -- get acceleration FF in right direction
 ---@return number
-function pos_control:get_accel_right_ff() end
+function pos_control:get_accel_E_ff() end
 
 -- desc
 ---@class follow

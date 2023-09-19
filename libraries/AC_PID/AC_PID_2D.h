@@ -37,6 +37,10 @@ public:
     Vector2f get_d() const;
     Vector2f get_ff();
     const Vector2f& get_error() const { return _error; }
+    
+    void     set_ff(Vector2f ff_new) { _FF = ff_new; };
+    void     set_ffX(float ffX) {_FF.x = ffX; }
+    void     set_ffY(float ffY) {_FF.y = ffY; }
 
     // reset the integrator
     void reset_I();
@@ -98,6 +102,8 @@ protected:
     Vector2f    _error;         // error value to enable filtering
     Vector2f    _derivative;    // last derivative from low-pass filter
     Vector2f    _integrator;    // integrator value
+    Vector2f    _FF;            // feedforward value
+
     bool        _reset_filter;  // true when input filter should be reset during next call to update_all
 
     AP_PIDInfo _pid_info_x;

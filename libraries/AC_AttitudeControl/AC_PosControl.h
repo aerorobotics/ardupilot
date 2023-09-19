@@ -248,12 +248,12 @@ public:
     void set_pos_vel_accel_xy(const Vector2p& pos, const Vector2f& vel, const Vector2f& accel);
 
     /// set feedforward terms
-    void set_accel_forward_ff(float feedfoward) {_accel_foward_ff_cmss = feedfoward * 100.0f; }
-    void set_accel_right_ff(float feedfoward) {_accel_right_ff_cmss = feedfoward * 100.0f; }
+    void set_accel_N_ff(float feedfoward) {_accel_N_ff_cmss = feedfoward * 100.0f; }
+    void set_accel_E_ff(float feedfoward) {_accel_E_ff_cmss = feedfoward * 100.0f; }
     
     /// get feedforward terms
-    float get_accel_forward_ff() {return _accel_foward_ff_cmss / 100.0f; }
-    float get_accel_right_ff() {return _accel_right_ff_cmss / 100.0f; }
+    float get_accel_N_ff() {return _accel_N_ff_cmss / 100.0f; }
+    float get_accel_E_ff() {return _accel_E_ff_cmss / 100.0f; }
 
 
     /// Position
@@ -479,8 +479,8 @@ protected:
     float       _vel_offset_z;          // vertical velocity offset in NEU cm/s calculated by pos_to_rate step
     float       _accel_offset_z;        // vertical acceleration offset in NEU cm/s/s
 
-    float       _accel_foward_ff_cmss = 0;   // acceleration feed forward in the body forward direction 
-    float       _accel_right_ff_cmss = 0;    // acceleration feed forward in the body right direction 
+    float       _accel_N_ff_cmss = 0;   // acceleration feed forward in North (NEU) in cm/s/s 
+    float       _accel_E_ff_cmss = 0;   // acceleration feed forward in East (NEU) in cm/s/s 
 
     // ekf reset handling
     uint32_t    _ekf_xy_reset_ms;       // system time of last recorded ekf xy position reset

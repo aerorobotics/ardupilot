@@ -107,7 +107,8 @@ Vector2f AC_PID_2D::update_all(const Vector2f &target, const Vector2f &measureme
     _pid_info_x.P = _error.x * _kp;
     _pid_info_x.I = _integrator.x;
     _pid_info_x.D = _derivative.x * _kd;
-    _pid_info_x.FF = _target.x * _kff;
+    // _pid_info_x.FF = _target.x * _kff;
+    _pid_info_x.FF = _FF.x;
 
     _pid_info_y.target = _target.y;
     _pid_info_y.actual = measurement.y;
@@ -116,8 +117,9 @@ Vector2f AC_PID_2D::update_all(const Vector2f &target, const Vector2f &measureme
     _pid_info_y.I = _integrator.y;
     _pid_info_y.D = _derivative.y * _kd;
     _pid_info_y.FF = _target.y * _kff;
+    _pid_info_y.FF = _FF.y;
 
-    return _error * _kp + _integrator + _derivative * _kd + _target * _kff;
+    return _error * _kp + _integrator + _derivative * _kd + _FF; //_target * _kff;
 }
 
 Vector2f AC_PID_2D::update_all(const Vector3f &target, const Vector3f &measurement, float dt, const Vector3f &limit)
@@ -161,9 +163,10 @@ Vector2f AC_PID_2D::get_d() const
 
 Vector2f AC_PID_2D::get_ff()
 {
-    _pid_info_x.FF = _target.x * _kff;
-    _pid_info_y.FF = _target.y * _kff;
-    return _target * _kff;
+    // _pid_info_x.FF = _target.x * _kff;
+    // _pid_info_y.FF = _target.y * _kff;
+
+    return _FF;
 }
 
 void AC_PID_2D::reset_I()

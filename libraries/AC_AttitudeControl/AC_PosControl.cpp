@@ -636,7 +636,11 @@ void AC_PosControl::update_xy_controller()
 
     const Vector2f &curr_vel = _inav.get_velocity_xy_cms();
     Vector2f accel_target = _pid_vel_xy.update_all(_vel_target.xy(), curr_vel, _dt, _limit_vector.xy());
-    
+
+    // Add controller feedforward
+    _pid_vel_xy.set_ffX(_accel_N_ff_cmss);
+    _pid_vel_xy.set_ffY(_accel_E_ff_cmss);
+
     // acceleration to correct for velocity error and scale PID output to compensate for optical flow measurement induced EKF noise
     accel_target *= ahrsControlScaleXY;
 
@@ -1183,11 +1187,6 @@ void AC_PosControl::accel_to_lean_angles(float accel_x_cmss, float accel_y_cmss,
     // rotate accelerations into body forward-right frame
     float accel_forward = accel_x_cmss * _ahrs.cos_yaw() + accel_y_cmss * _ahrs.sin_yaw();
     float accel_right = -accel_x_cmss * _ahrs.sin_yaw() + accel_y_cmss * _ahrs.cos_yaw();
-
-    // add feed forward from NFFT
-    //  TODO: How could we log this?
-    accel_forward += _accel_foward_ff_cmss;
-    accel_right += _accel_right_ff_cmss;
 
     // update angle targets that will be passed to stabilize controller
     pitch_target = accel_to_angle(-accel_forward * 0.01) * 100;
