@@ -114,9 +114,9 @@ float AC_PID_Basic::update_all(float target, float measurement, float dt, bool l
     _pid_info.P = _error * _kp;
     _pid_info.I = _integrator;
     _pid_info.D = _derivative * _kd;
-    _pid_info.FF = _target * _kff;
+    _pid_info.FF = _FF;//_target * _kff;
 
-    return P_out + _integrator + D_out + _target * _kff;
+    return P_out + _integrator + D_out + _FF; //_target * _kff;
 }
 
 //  update_i - update the integral

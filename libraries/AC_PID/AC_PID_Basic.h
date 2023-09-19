@@ -52,12 +52,14 @@ public:
     float imax() const WARN_IF_UNUSED { return _kimax.get(); }
     float get_filt_E_alpha(float dt) const WARN_IF_UNUSED;
     float get_filt_D_alpha(float dt) const WARN_IF_UNUSED;
+    float get_ff() { return _FF; }
 
     // set accessors
     void kP(float v) { _kp.set(v); }
     void kI(float v) { _ki.set(v); }
     void kD(float v) { _kd.set(v); }
     void ff(float v) { _kff.set(v); }
+    void set_ff(float v) { _FF = v; }
     void imax(float v) { _kimax.set(fabsf(v)); }
     void filt_E_hz(float hz) { _filt_E_hz.set(fabsf(hz)); }
     void filt_D_hz(float hz) { _filt_D_hz.set(fabsf(hz)); }
@@ -88,6 +90,8 @@ protected:
     float _error;       // error value to enable filtering
     float _derivative;  // last derivative for low-pass filter
     float _integrator;  // integrator value
+    float _FF;          // feedforward value
+
     bool _reset_filter; // true when input filter should be reset during next call to set_input
 
     AP_PIDInfo _pid_info;

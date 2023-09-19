@@ -955,6 +955,9 @@ void AC_PosControl::update_z_controller()
     _accel_target.z = _pid_vel_z.update_all(_vel_target.z, curr_vel_z, _dt, _motors.limit.throttle_lower, _motors.limit.throttle_upper);
     _accel_target.z *= AP::ahrs().getControlScaleZ();
 
+    // Add controller feedforward
+    _pid_vel_z.set_ff(_accel_D_ff_cmss);
+
     // add feed forward component
     _accel_target.z += _accel_desired.z;
 

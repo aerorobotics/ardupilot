@@ -250,11 +250,12 @@ public:
     /// set feedforward terms
     void set_accel_N_ff(float feedfoward) {_accel_N_ff_cmss = feedfoward * 100.0f; }
     void set_accel_E_ff(float feedfoward) {_accel_E_ff_cmss = feedfoward * 100.0f; }
+    void set_accel_D_ff(float feedfoward) {_accel_D_ff_cmss = feedfoward * 100.0f; }
     
     /// get feedforward terms
     float get_accel_N_ff() {return _accel_N_ff_cmss / 100.0f; }
     float get_accel_E_ff() {return _accel_E_ff_cmss / 100.0f; }
-
+    float get_accel_D_ff() {return _accel_D_ff_cmss / 100.0f; }
 
     /// Position
 
@@ -481,6 +482,7 @@ protected:
 
     float       _accel_N_ff_cmss = 0;   // acceleration feed forward in North (NEU) in cm/s/s 
     float       _accel_E_ff_cmss = 0;   // acceleration feed forward in East (NEU) in cm/s/s 
+    float       _accel_D_ff_cmss = 0;   // acceleration feed forward in Down (NEU) in cm/s/s 
 
     // ekf reset handling
     uint32_t    _ekf_xy_reset_ms;       // system time of last recorded ekf xy position reset

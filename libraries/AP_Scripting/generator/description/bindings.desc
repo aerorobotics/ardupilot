@@ -601,6 +601,8 @@ singleton AC_PosControl method set_accel_N_ff void float  -20.0 20.0
 singleton AC_PosControl method get_accel_N_ff float
 singleton AC_PosControl method set_accel_E_ff void float -20.0 20.0
 singleton AC_PosControl method get_accel_E_ff float
+singleton AC_PosControl method set_accel_D_ff void float -20.0 20.0
+singleton AC_PosControl method get_accel_D_ff float
 singleton AC_PosControl method get_roll_cd float
 singleton AC_PosControl method get_pitch_cd float
 

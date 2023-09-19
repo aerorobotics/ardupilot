@@ -2655,21 +2655,29 @@ function AR_PosControl:get_srate() end
 ---@class pos_control
 pos_control = {}
 
--- set acceleration FF in forward direction
+-- set acceleration FF in North direction
 ---@param feedforward_term number
 function pos_control:set_accel_N_ff(feedforward_term) end
 
--- set acceleration FF in right direction
+-- set acceleration FF in East direction
 ---@param feedforward_term number
 function pos_control:set_accel_E_ff(feedforward_term) end
 
--- get acceleration FF in forward direction
+-- set acceleration FF in Down direction
+---@param feedforward_term number
+function pos_control:set_accel_D_ff(feedforward_term) end
+
+-- get acceleration FF in North direction
 ---@return number
 function pos_control:get_accel_N_ff() end
 
--- get acceleration FF in right direction
+-- get acceleration FF in East direction
 ---@return number
 function pos_control:get_accel_E_ff() end
+
+-- get acceleration FF in Down direction
+---@return number
+function pos_control:get_accel_D_ff() end
 
 -- desc
 ---@class follow
