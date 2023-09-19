@@ -116,7 +116,7 @@ Vector2f AC_PID_2D::update_all(const Vector2f &target, const Vector2f &measureme
     _pid_info_y.P = _error.y * _kp;
     _pid_info_y.I = _integrator.y;
     _pid_info_y.D = _derivative.y * _kd;
-    _pid_info_y.FF = _target.y * _kff;
+    // _pid_info_y.FF = _target.y * _kff;
     _pid_info_y.FF = _FF.y;
 
     return _error * _kp + _integrator + _derivative * _kd + _FF; //_target * _kff;
