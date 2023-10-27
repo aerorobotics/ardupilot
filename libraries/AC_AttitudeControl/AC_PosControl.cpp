@@ -956,7 +956,7 @@ void AC_PosControl::update_z_controller()
     _accel_target.z *= AP::ahrs().getControlScaleZ();
 
     // Add controller feedforward
-    _pid_vel_z.set_ff(_accel_D_ff_cmss);
+    _pid_accel_z.set_ff(_accel_D_ff_cmss);
 
     // add feed forward component
     _accel_target.z += _accel_desired.z;
