@@ -204,6 +204,12 @@ void AP_MotorsMatrix_6DoF_Scripting::output_armed_stabilizing()
         }
     }
 
+    for (i = 0; i < 4; i++) {
+        if (motor_enabled[i]) {
+            _thrust_rpyt_out[i] = (280 - 28.0) / (550.0 - 28.0);
+        }
+    }
+
     /*
         apply deadzone to revesible motors, this stops motors from reversing direction too often
         re-use yaw headroom param for deadzone, constain to a max of 25%

@@ -725,6 +725,7 @@ bool QuadPlane::setup(void)
     case AP_Motors::MOTOR_FRAME_TAILSITTER:
     case AP_Motors::MOTOR_FRAME_SCRIPTING_MATRIX:
     case AP_Motors::MOTOR_FRAME_DYNAMIC_SCRIPTING_MATRIX:
+    case AP_Motors::MOTOR_FRAME_6DOF_SCRIPTING:
         break;
     default:
         AP_BoardConfig::config_error("Unsupported Q_FRAME_CLASS %u", (unsigned int)(frame_class.get()));
@@ -748,10 +749,16 @@ bool QuadPlane::setup(void)
         break;
     case AP_Motors::MOTOR_FRAME_DYNAMIC_SCRIPTING_MATRIX:
 #if AP_SCRIPTING_ENABLED
-            motors = NEW_NOTHROW AP_MotorsMatrix_Scripting_Dynamic(plane.scheduler.get_loop_rate_hz());
-            motors_var_info = AP_MotorsMatrix_Scripting_Dynamic::var_info;
+        motors = NEW_NOTHROW AP_MotorsMatrix_Scripting_Dynamic(plane.scheduler.get_loop_rate_hz());
+        motors_var_info = AP_MotorsMatrix_Scripting_Dynamic::var_info;
 #endif // AP_SCRIPTING_ENABLED
-            break;
+        break;
+    case AP_Motors::MOTOR_FRAME_6DOF_SCRIPTING:
+#if AP_SCRIPTING_ENABLED
+        motors = NEW_NOTHROW AP_MotorsMatrix_6DoF_Scripting(plane.scheduler.get_loop_rate_hz());
+        motors_var_info = AP_MotorsMatrix_6DoF_Scripting::var_info;
+#endif // AP_SCRIPTING_ENABLED
+        break;
     default:
         motors = NEW_NOTHROW AP_MotorsMatrix(rc_speed);
         motors_var_info = AP_MotorsMatrix::var_info;
