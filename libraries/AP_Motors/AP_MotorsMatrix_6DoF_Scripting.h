@@ -59,6 +59,48 @@ protected:
     float _roll_offset;
     float _pitch_offset;
 
+    // EVADE
+    static constexpr float DEG2RAD = 3.14159265f / 180.0f;
+    static constexpr float TILT0 = 20.0f; // deg
+	static constexpr float NOZZLE0 = 0.0f; // deg
+	static constexpr float FIXED_PIVOT0 = 20.0f; // rad
+    static constexpr int n_thrusters_ = 4;
+	static constexpr int n_servos_ = 8;
+	static constexpr int n_outputs_ = 6;
+	static constexpr int n_inputs_ = 16; // this has to be 16, not 8 or 12 because PX4 expects 16.
+    static constexpr float _fx_scale = 1.0f;
+    static constexpr float _fy_scale = 1.0f;
+    static constexpr float _fz_scale = 1.0f;
+    static constexpr float _mx_scale = 8000.0f;
+    static constexpr float _my_scale = 8000.0f;
+    static constexpr float _mz_scale = 8000.0f;
+    static constexpr float _sv_tl0_max_a = 45.0f;
+    static constexpr float _sv_tl1_max_a = 0.0f;
+    static constexpr float _sv_tl2_max_a = 45.0f;
+    static constexpr float _sv_tl3_max_a = 0.0f;
+    static constexpr float _sv_tl4_max_a = 20.0f;
+    static constexpr float _sv_tl5_max_a = 20.0f;
+    static constexpr float _sv_tl6_max_a = 20.0f;
+    static constexpr float _sv_tl7_max_a = 20.0f;
+    static constexpr float _sv_tl0_min_a = 0.0f;
+    static constexpr float _sv_tl1_min_a = -45.0f;
+    static constexpr float _sv_tl2_min_a = 0.0f;
+    static constexpr float _sv_tl3_min_a = -45.0f;
+    static constexpr float _sv_tl4_min_a = -20.0f;
+    static constexpr float _sv_tl5_min_a = -20.0f;
+    static constexpr float _sv_tl6_min_a = -20.0f; 
+    static constexpr float _sv_tl7_min_a = -20.0f;
+
+
+    float nominal_tilt_[n_thrusters_];
+	float nominal_nozzle_[n_thrusters_];
+	float fixed_pivot_[n_thrusters_];
+	float tilt_min_[n_thrusters_];
+	float tilt_max_[n_thrusters_];
+	float nozzle_min_[n_thrusters_];
+	float nozzle_max_[n_thrusters_];
+	float nominal_thrust_[n_thrusters_];
+
 private:
     static AP_MotorsMatrix_6DoF_Scripting *_singleton;
 
