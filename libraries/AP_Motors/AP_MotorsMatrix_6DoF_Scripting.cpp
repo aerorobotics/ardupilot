@@ -106,12 +106,12 @@ void AP_MotorsMatrix_6DoF_Scripting::output_armed_stabilizing()
     thrust_vec.x = forward_thrust;
     thrust_vec.y = right_thrust;
     thrust_vec.z = throttle_thrust;
+    thrust_vec.z *= -0.65f; // scaling this until I figure out why throttle thrust saturates. Nominal should be -1.0
     thrust_vec = rot * thrust_vec;
-    thrust_vec.z *= -1.0f;
 
     Vector3f control_sp_thrust = thrust_vec;
 
-
+    printf("------------------------------------------------------\n");
     printf("throttle thrust \n\t%.3f\n", static_cast<double>(throttle_thrust));
 
 
@@ -140,6 +140,11 @@ void AP_MotorsMatrix_6DoF_Scripting::output_armed_stabilizing()
 	Vector3f force_ned = acc_ned * mass;
     VectorN<float, n_outputs_> control_sp_ned; // 6dof, so 6 control setpoints 
     VectorN<float, n_outputs_> control_trim; 
+
+    printf("acc_ned \n\t%.3f, %.3f, %.3f\n",
+				static_cast<double>(acc_ned[0]),
+				static_cast<double>(acc_ned[1]),
+				static_cast<double>(acc_ned[2]));
 
 	control_sp_ned[0] = roll_thrust;
 	control_sp_ned[1] = pitch_thrust;
