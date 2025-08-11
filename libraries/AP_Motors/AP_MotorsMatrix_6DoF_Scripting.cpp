@@ -106,7 +106,7 @@ void AP_MotorsMatrix_6DoF_Scripting::output_armed_stabilizing()
     thrust_vec.x = forward_thrust;
     thrust_vec.y = right_thrust;
     thrust_vec.z = throttle_thrust;
-    thrust_vec.z *= -0.65f; // scaling this until I figure out why throttle thrust saturates. Nominal should be -1.0
+    thrust_vec.z *= -1.0f;
     thrust_vec = rot * thrust_vec;
 
     Vector3f control_sp_thrust = thrust_vec;
