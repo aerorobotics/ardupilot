@@ -30,6 +30,38 @@
 
 extern const AP_HAL::HAL& hal;
 
+const AP_Param::GroupInfo AP_MotorsMatrix_6DoF_Scripting::var_info[] = {
+    AP_GROUPINFO("CA_TILT_0", 1, AP_MotorsMatrix_6DoF_Scripting, _tilt0,  20.0),
+    AP_GROUPINFO("CA_NOZZ_0", 2, AP_MotorsMatrix_6DoF_Scripting, _nozzle0,  0.0),
+    AP_GROUPINFO("CA_PIVOT_0", 3, AP_MotorsMatrix_6DoF_Scripting, _fixed_pivot0,  20.0),
+    AP_GROUPINFO("CA_T_MAX", 4, AP_MotorsMatrix_6DoF_Scripting, _thrust_max,  550.0),
+    AP_GROUPINFO("CA_T_IDLE", 5, AP_MotorsMatrix_6DoF_Scripting, _thrust_idle,  28.0),
+    AP_GROUPINFO("CA_MASS", 6, AP_MotorsMatrix_6DoF_Scripting, _mass,  150.0),
+    AP_GROUPINFO("CA_SV_TL0_MAXA", 7, AP_MotorsMatrix_6DoF_Scripting, _sv_tl0_max_a,  45.0),
+    AP_GROUPINFO("CA_SV_TL1_MAXA", 8, AP_MotorsMatrix_6DoF_Scripting, _sv_tl1_max_a,  0.0),
+    AP_GROUPINFO("CA_SV_TL2_MAXA", 9, AP_MotorsMatrix_6DoF_Scripting, _sv_tl2_max_a,  45.0),
+    AP_GROUPINFO("CA_SV_TL3_MAXA", 10, AP_MotorsMatrix_6DoF_Scripting, _sv_tl3_max_a,  0.0),
+    AP_GROUPINFO("CA_SV_TL4_MAXA", 11, AP_MotorsMatrix_6DoF_Scripting, _sv_tl4_max_a,  20.0),
+    AP_GROUPINFO("CA_SV_TL5_MAXA", 12, AP_MotorsMatrix_6DoF_Scripting, _sv_tl5_max_a,  20.0),
+    AP_GROUPINFO("CA_SV_TL6_MAXA", 13, AP_MotorsMatrix_6DoF_Scripting, _sv_tl6_max_a,  20.0),
+    AP_GROUPINFO("CA_SV_TL7_MAXA", 14, AP_MotorsMatrix_6DoF_Scripting, _sv_tl7_max_a,  20.0),
+    AP_GROUPINFO("CA_SV_TL0_MINA", 15, AP_MotorsMatrix_6DoF_Scripting, _sv_tl0_min_a,  0.0),
+    AP_GROUPINFO("CA_SV_TL1_MINA", 16, AP_MotorsMatrix_6DoF_Scripting, _sv_tl1_min_a,  -45.0),
+    AP_GROUPINFO("CA_SV_TL2_MINA", 17, AP_MotorsMatrix_6DoF_Scripting, _sv_tl2_min_a,  0.0),
+    AP_GROUPINFO("CA_SV_TL3_MINA", 18, AP_MotorsMatrix_6DoF_Scripting, _sv_tl3_min_a,  -45.0),
+    AP_GROUPINFO("CA_SV_TL4_MINA", 19, AP_MotorsMatrix_6DoF_Scripting, _sv_tl4_min_a,  -20.0),
+    AP_GROUPINFO("CA_SV_TL5_MINA", 20, AP_MotorsMatrix_6DoF_Scripting, _sv_tl5_min_a,  -20.0),
+    AP_GROUPINFO("CA_SV_TL6_MINA", 21, AP_MotorsMatrix_6DoF_Scripting, _sv_tl6_min_a,  -20.0),
+    AP_GROUPINFO("CA_SV_TL7_MINA", 22, AP_MotorsMatrix_6DoF_Scripting, _sv_tl7_min_a,  -20.0),
+    AP_GROUPINFO("CA_FX_SCALE", 23, AP_MotorsMatrix_6DoF_Scripting, _fx_scale,  1.0),
+    AP_GROUPINFO("CA_FY_SCALE", 24, AP_MotorsMatrix_6DoF_Scripting, _fy_scale,  1.0),
+    AP_GROUPINFO("CA_FZ_SCALE", 25, AP_MotorsMatrix_6DoF_Scripting, _fz_scale,  1.0),
+    AP_GROUPINFO("CA_MX_SCALE", 26, AP_MotorsMatrix_6DoF_Scripting, _mx_scale,  8000.0),
+    AP_GROUPINFO("CA_MY_SCALE", 27, AP_MotorsMatrix_6DoF_Scripting, _my_scale,  8000.0),
+    AP_GROUPINFO("CA_MZ_SCALE", 28, AP_MotorsMatrix_6DoF_Scripting, _mz_scale,  8000.0),
+    AP_GROUPEND
+};
+
 void AP_MotorsMatrix_6DoF_Scripting::output_to_motors()
 {
     switch (_spool_state) {
@@ -124,9 +156,8 @@ void AP_MotorsMatrix_6DoF_Scripting::output_armed_stabilizing()
 	Matrix3f _R_bn; // Assuming default constructor initializes appropriately (e.g., identity)
     _R_bn.identity();
 
-    float mass = 165.0f;
 	Vector3f acc_ned = _R_bn.transposed() * acc_body + Vector3f(0.f, 0.f, -CONSTANTS_ONE_G);
-	Vector3f force_ned = acc_ned * mass;
+	Vector3f force_ned = acc_ned * _mass;
     VectorN<float, n_outputs_> control_sp_ned; // 6dof, so 6 control setpoints 
     VectorN<float, n_outputs_> control_trim; 
 
@@ -140,7 +171,7 @@ void AP_MotorsMatrix_6DoF_Scripting::output_armed_stabilizing()
 	control_sp_ned[5] = force_ned[2];
 
     control_trim.zero();
-    control_trim[5] = -CONSTANTS_ONE_G * mass;
+    control_trim[5] = -CONSTANTS_ONE_G * _mass;
 
     // Compute the actuator trim in the actuator space
 
@@ -208,7 +239,9 @@ void AP_MotorsMatrix_6DoF_Scripting::output_armed_stabilizing()
 
     for (int i = 0; i < 4; i++) {
         if (motor_enabled[i]) {
-            _thrust_rpyt_out[i] = (416 - 28.0) / (550.0 - 28.0); // thrusters
+            if (fabsf(_thrust_max - _thrust_idle) > 1e-6f) { // Avoid division by zero
+                _thrust_rpyt_out[i] = (0.282 * _mass * CONSTANTS_ONE_G - _thrust_idle) / (_thrust_max - _thrust_idle); // thrusters
+            }
             _thrust_rpyt_out[4+i] = _actuator_sp[i]; // tilt
             _thrust_rpyt_out[4+4+i] = _actuator_sp[4+i]; // nozzle
         }
@@ -349,6 +382,7 @@ void AP_MotorsMatrix_6DoF_Scripting::add_motor(int8_t motor_num, float roll_fact
 }
 
 bool AP_MotorsMatrix_6DoF_Scripting::init(uint8_t expected_num_motors) {
+    AP_Param::setup_object_defaults(this, var_info);
     uint8_t num_motors = 0;
     for (uint8_t i = 0; i < AP_MOTORS_MAX_NUM_MOTORS; i++) {
         if (motor_enabled[i]) {
@@ -387,19 +421,19 @@ bool AP_MotorsMatrix_6DoF_Scripting::init(uint8_t expected_num_motors) {
     }
 
     // EVADE Initialization
-    nominal_tilt_[0] = DEG2RAD*TILT0;
-	nominal_tilt_[1] = -DEG2RAD*TILT0;
-	nominal_tilt_[2] = DEG2RAD*TILT0;
-	nominal_tilt_[3] = -DEG2RAD*TILT0;
+    nominal_tilt_[0] = DEG2RAD*_tilt0;
+	nominal_tilt_[1] = -DEG2RAD*_tilt0;
+	nominal_tilt_[2] = DEG2RAD*_tilt0;
+	nominal_tilt_[3] = -DEG2RAD*_tilt0;
 
-	nominal_nozzle_[0] = -DEG2RAD*NOZZLE0;
-	nominal_nozzle_[1] = -DEG2RAD*NOZZLE0;
-	nominal_nozzle_[2] = DEG2RAD*NOZZLE0;
-	nominal_nozzle_[3] = DEG2RAD*NOZZLE0;
-	fixed_pivot_[0] = -DEG2RAD*FIXED_PIVOT0;
-	fixed_pivot_[1] = -DEG2RAD*FIXED_PIVOT0;
-	fixed_pivot_[2] = DEG2RAD*FIXED_PIVOT0;
-	fixed_pivot_[3] = DEG2RAD*FIXED_PIVOT0;
+	nominal_nozzle_[0] = -DEG2RAD*_nozzle0;
+	nominal_nozzle_[1] = -DEG2RAD*_nozzle0;
+	nominal_nozzle_[2] = DEG2RAD*_nozzle0;
+	nominal_nozzle_[3] = DEG2RAD*_nozzle0;
+	fixed_pivot_[0] = -DEG2RAD*_fixed_pivot0;
+	fixed_pivot_[1] = -DEG2RAD*_fixed_pivot0;
+	fixed_pivot_[2] = DEG2RAD*_fixed_pivot0;
+	fixed_pivot_[3] = DEG2RAD*_fixed_pivot0;
 
 	tilt_min_[0] = DEG2RAD*_sv_tl0_min_a;
 	tilt_min_[1] = DEG2RAD*_sv_tl1_min_a;
