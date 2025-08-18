@@ -23,15 +23,18 @@
 #include <SRV_Channel/SRV_Channel.h>
 #include <GCS_MAVLink/GCS.h>
 #include <AP_Math/vectorN.h>
+
+#if CONFIG_HAL_BOARD == HAL_BOARD_SITL
 #include <stdio.h>
+#endif
 
 extern const AP_HAL::HAL& hal;
 
 void AP_MotorsMatrix_6DoF_Scripting::output_to_motors()
 {
     switch (_spool_state) {
-        case SpoolState::SHUT_DOWN:
-        case SpoolState::GROUND_IDLE:
+        case SpoolState::SHUT_DOWN: // disarmed
+        case SpoolState::GROUND_IDLE: // armed, but on ground       
         {
             // no output, cant spin up for ground idle because we don't know which way motors should be spining
             for (uint8_t i = 0; i < AP_MOTORS_MAX_NUM_MOTORS; i++) {
@@ -67,6 +70,7 @@ void AP_MotorsMatrix_6DoF_Scripting::output_to_motors()
             break;
     }
 
+    printf("spool state %d \n", static_cast<uint8_t>(_spool_state));
 
     // Send to each motor
     for (uint8_t i = 0; i < AP_MOTORS_MAX_NUM_MOTORS; i++) {
@@ -74,12 +78,6 @@ void AP_MotorsMatrix_6DoF_Scripting::output_to_motors()
             SRV_Channels::set_output_scaled(SRV_Channels::get_motor_function(i), _actuator[i] * 4500);
         }
     }
-
-    // for (uint8_t i = 0; i < AP_MOTORS_MAX_NUM_MOTORS; i++) {
-    //     if (motor_enabled[i]) {
-    //         rc_write(i, output_to_pwm(_actuator[i]));
-    //     }
-    // }
 
 }
 // output_armed - sends commands to the motors
@@ -111,15 +109,6 @@ void AP_MotorsMatrix_6DoF_Scripting::output_armed_stabilizing()
 
     Vector3f control_sp_thrust = thrust_vec;
 
-    printf("------------------------------------------------------\n");
-    printf("throttle thrust \n\t%.3f\n", static_cast<double>(throttle_thrust));
-
-
-    printf("control_sp_thrust \n\t%.3f, %.3f, %.3f\n",
-				static_cast<double>(control_sp_thrust[0]),
-				static_cast<double>(control_sp_thrust[1]),
-				static_cast<double>(control_sp_thrust[2]));
-
     Vector3f acc_body;
     const float _hover_thrust = 0.7;
 	static constexpr float CONSTANTS_ONE_G = 9.81f; // Standard gravity in m/s^2
@@ -141,10 +130,7 @@ void AP_MotorsMatrix_6DoF_Scripting::output_armed_stabilizing()
     VectorN<float, n_outputs_> control_sp_ned; // 6dof, so 6 control setpoints 
     VectorN<float, n_outputs_> control_trim; 
 
-    printf("acc_ned \n\t%.3f, %.3f, %.3f\n",
-				static_cast<double>(acc_ned[0]),
-				static_cast<double>(acc_ned[1]),
-				static_cast<double>(acc_ned[2]));
+    
 
 	control_sp_ned[0] = roll_thrust;
 	control_sp_ned[1] = pitch_thrust;
@@ -156,23 +142,6 @@ void AP_MotorsMatrix_6DoF_Scripting::output_armed_stabilizing()
     control_trim.zero();
     control_trim[5] = -CONSTANTS_ONE_G * mass;
 
-    printf("control_sp_ned \n\t%.3f, %.3f, %.3f, %.3f, %.3f, %.3f\n",
-				static_cast<double>(control_sp_ned[0]),
-				static_cast<double>(control_sp_ned[1]),
-				static_cast<double>(control_sp_ned[2]),
-                static_cast<double>(control_sp_ned[3]),
-				static_cast<double>(control_sp_ned[4]),
-				static_cast<double>(control_sp_ned[5]));
-    
-    printf("control_trim \n\t%.3f, %.3f, %.3f, %.3f, %.3f, %.3f\n",
-				static_cast<double>(control_trim[0]),
-				static_cast<double>(control_trim[1]),
-				static_cast<double>(control_trim[2]),
-                static_cast<double>(control_trim[3]),
-				static_cast<double>(control_trim[4]),
-				static_cast<double>(control_trim[5]));
-
-
     // Compute the actuator trim in the actuator space
 
     // Vector<float, NUM_ACTUATORS> _actuator_trim_unnormalized = _actuator_trim;
@@ -181,11 +150,6 @@ void AP_MotorsMatrix_6DoF_Scripting::output_armed_stabilizing()
         _actuator_trim_unnormalized[i] = nominal_tilt_[i]; 
         _actuator_trim_unnormalized[4+i] = nominal_nozzle_[i]; 
     }
-	// // Unnormalize actuator trim to the range of [TILT_MIN, TILT_MAX] and [NOZZLE_MIN, NOZZLE_MAX]
-	// for (int i=0; i<4; i++){
-	// 	_actuator_trim_unnormalized(4+i) = (_actuator_trim(4+i) + 1)/2.0f * (tilt_max_[i] - tilt_min_[i]) + tilt_min_[i];
-	// 	_actuator_trim_unnormalized(4+i+4) = (_actuator_trim(4+4+i) + 1.0f)/2.0f * (nozzle_max_[i] - nozzle_min_[i]) + nozzle_min_[i];
-	// }
 
 	VectorN<float, n_outputs_> control_needed_after_trim = control_sp_ned - control_trim;
 
@@ -197,46 +161,18 @@ void AP_MotorsMatrix_6DoF_Scripting::output_armed_stabilizing()
 	control_needed_after_trim[4] = control_needed_after_trim[4]*_fy_scale;
 	control_needed_after_trim[5] = control_needed_after_trim[5]*_fz_scale;
 
-    printf("control needed after trim \n\t%.3f, %.3f, %.3f, %.3f, %.3f, %.3f\n",
-				static_cast<double>(control_needed_after_trim[0]),
-				static_cast<double>(control_needed_after_trim[1]),
-				static_cast<double>(control_needed_after_trim[2]),
-                static_cast<double>(control_needed_after_trim[3]),
-				static_cast<double>(control_needed_after_trim[4]),
-				static_cast<double>(control_needed_after_trim[5]));
+    
 
-	// Allocate
-    // Raw 2D array for _mix
+	// Allocate. Using raw 2D array for _mix because Ardupilot doesn't support non-square matrix
+    // This block is equivalent to _actuator_sp = _actuator_trim_unnormalized + mix @ control_needed_after trim
     VectorN<float, n_servos_> _actuator_sp;
-    float mix[n_servos_][n_outputs_] = {
-        {0.000840    ,    0.000000    ,    0.000198    ,    -0.000581   ,    0.000623   ,   0.000796 },
-        {-0.000840   ,    0.000000    ,    0.000198    ,    -0.000581   ,    -0.000623  ,   -0.000796},
-        {-0.000840   ,    -0.000000   ,    -0.000198   ,    -0.000581   ,    -0.000623  ,   0.000796 },
-        {0.000840    ,    -0.000000   ,    -0.000198   ,    -0.000581   ,    0.000623   ,   -0.000796},
-        {-0.000105   ,    0.001152    ,    0.000140    ,    -0.000652   ,    0.000503   ,   -0.000847},
-        {-0.000105   ,    -0.001152   ,    -0.000140   ,    0.000652    ,    0.000503   ,   -0.000847},
-        {-0.000105   ,    -0.001152   ,    0.000140    ,    0.000652    ,    0.000503   ,   0.000847 },
-        {-0.000105   ,    0.001152    ,    -0.000140   ,    -0.000652   ,    0.000503   ,   0.000847 }
-    };
-                                                              
-    // Multiply + add
     for (int i = 0; i < n_servos_; ++i) {
         float sum = 0.0f;
         for (int j = 0; j < n_outputs_; ++j) {
-            sum += mix[i][j] * control_needed_after_trim[j];
+            sum += _mix[i][j] * control_needed_after_trim[j];
         }
         _actuator_sp[i] = _actuator_trim_unnormalized[i] + sum;
     }
-
-    printf("actuator_sp before clipping (tilt, nozzle) \n\t%.3f, %.3f\n\t%.3f, %.3f\n\t%.3f, %.3f\n\t%.3f, %.3f \n",
-        static_cast<double>(_actuator_sp[0]),
-        static_cast<double>(_actuator_sp[1]),
-        static_cast<double>(_actuator_sp[2]),
-        static_cast<double>(_actuator_sp[3]),
-        static_cast<double>(_actuator_sp[4]),
-        static_cast<double>(_actuator_sp[5]),
-        static_cast<double>(_actuator_sp[6]),
-        static_cast<double>(_actuator_sp[7]));
 
 	// clip to [min, max]
 	for (int i=0; i<4; i++){
@@ -278,200 +214,84 @@ void AP_MotorsMatrix_6DoF_Scripting::output_armed_stabilizing()
         }
     }
 
-    printf("force_ned \n\t%.3f, %.3f, %.3f\n",
-				static_cast<double>(force_ned[0]),
-				static_cast<double>(force_ned[1]),
-				static_cast<double>(force_ned[2]));
+    #if CONFIG_HAL_BOARD == HAL_BOARD_SITL
+        // printf("------------------------------------------------------\n");
+        // printf("throttle thrust \n\t%.3f\n", static_cast<double>(throttle_thrust));
 
-    // printf("actuator_trim normalized [-1,1]: (tilt, nozzle) \n\t%.3f, %.3f\n\t%.3f, %.3f\n\t%.3f, %.3f\n\t%.3f, %.3f \n",
-    //     static_cast<double>(_actuator_trim[4]),
-    //     static_cast<double>(_actuator_trim[5]),
-    //     static_cast<double>(_actuator_trim[6]),
-    //     static_cast<double>(_actuator_trim[7]),
-    //     static_cast<double>(_actuator_trim[8]),
-    //     static_cast<double>(_actuator_trim[9]),
-    //     static_cast<double>(_actuator_trim[10]),
-    //     static_cast<double>(_actuator_trim[11]));
+        printf("thruster setpoint \n\t%.3f, %.3f, %.3f, %.3f\n",
+            static_cast<double>(_actuator[0]),
+            static_cast<double>(_actuator[1]),
+            static_cast<double>(_actuator[2]),
+            static_cast<double>(_actuator[3]));
 
-    printf("actuator_trim rad (tilt, nozzle) \n\t%.3f, %.3f\n\t%.3f, %.3f\n\t%.3f, %.3f\n\t%.3f, %.3f \n",
-        static_cast<double>(_actuator_trim_unnormalized[0]),
-        static_cast<double>(_actuator_trim_unnormalized[4]),
-        static_cast<double>(_actuator_trim_unnormalized[1]),
-        static_cast<double>(_actuator_trim_unnormalized[5]),
-        static_cast<double>(_actuator_trim_unnormalized[2]),
-        static_cast<double>(_actuator_trim_unnormalized[6]),
-        static_cast<double>(_actuator_trim_unnormalized[3]),
-        static_cast<double>(_actuator_trim_unnormalized[7]));
+        printf("control_sp_thrust \n\t%.3f, %.3f, %.3f\n",
+            static_cast<double>(control_sp_thrust[0]),
+            static_cast<double>(control_sp_thrust[1]),
+            static_cast<double>(control_sp_thrust[2]));
 
-    printf("torques needed \n\t%.3f, %.3f, %.3f,\nforces needed: \n\t%.3f, %.3f, %.3f\n",
-        static_cast<double>(control_needed_after_trim[0]),
-        static_cast<double>(control_needed_after_trim[1]),
-        static_cast<double>(control_needed_after_trim[2]),
-        static_cast<double>(control_needed_after_trim[3]),
-        static_cast<double>(control_needed_after_trim[4]),
-        static_cast<double>(control_needed_after_trim[5]));
+        // printf("acc_ned \n\t%.3f, %.3f, %.3f\n",
+        //     static_cast<double>(acc_ned[0]),
+        //     static_cast<double>(acc_ned[1]),
+        //     static_cast<double>(acc_ned[2]));
 
-    
+        // printf("control_sp_ned \n\t%.3f, %.3f, %.3f, %.3f, %.3f, %.3f\n",
+        //     static_cast<double>(control_sp_ned[0]),
+        //     static_cast<double>(control_sp_ned[1]),
+        //     static_cast<double>(control_sp_ned[2]),
+        //     static_cast<double>(control_sp_ned[3]),
+        //     static_cast<double>(control_sp_ned[4]),
+        //     static_cast<double>(control_sp_ned[5]));
+        
+        // printf("control_trim \n\t%.3f, %.3f, %.3f, %.3f, %.3f, %.3f\n",
+        //     static_cast<double>(control_trim[0]),
+        //     static_cast<double>(control_trim[1]),
+        //     static_cast<double>(control_trim[2]),
+        //     static_cast<double>(control_trim[3]),
+        //     static_cast<double>(control_trim[4]),
+        //     static_cast<double>(control_trim[5]));
 
-    // ---------------------------------------------------------------
+        // printf("control needed after trim \n\t%.3f, %.3f, %.3f, %.3f, %.3f, %.3f\n",
+        //     static_cast<double>(control_needed_after_trim[0]),
+        //     static_cast<double>(control_needed_after_trim[1]),
+        //     static_cast<double>(control_needed_after_trim[2]),
+        //     static_cast<double>(control_needed_after_trim[3]),
+        //     static_cast<double>(control_needed_after_trim[4]),
+        //     static_cast<double>(control_needed_after_trim[5]));
 
+        // printf("actuator_sp before clipping (tilt, nozzle) \n\t%.3f, %.3f\n\t%.3f, %.3f\n\t%.3f, %.3f\n\t%.3f, %.3f \n",
+        //     static_cast<double>(_actuator_sp[0]),
+        //     static_cast<double>(_actuator_sp[1]),
+        //     static_cast<double>(_actuator_sp[2]),
+        //     static_cast<double>(_actuator_sp[3]),
+        //     static_cast<double>(_actuator_sp[4]),
+        //     static_cast<double>(_actuator_sp[5]),
+        //     static_cast<double>(_actuator_sp[6]),
+        //     static_cast<double>(_actuator_sp[7]));
 
-    // uint8_t i;                          // general purpose counter
-    // float   roll_thrust;                // roll thrust input value, +/- 1.0
-    // float   pitch_thrust;               // pitch thrust input value, +/- 1.0
-    // float   yaw_thrust;                 // yaw thrust input value, +/- 1.0
-    // float   throttle_thrust;            // throttle thrust input value, 0.0 - 1.0
-    // float   forward_thrust;             // forward thrust input value, +/- 1.0
-    // float   right_thrust;               // right thrust input value, +/- 1.0
-
-    // // note that the throttle, forwards and right inputs are not in bodyframe, they are in the frame of the 'normal' 4DoF copter were pretending to be
-
-    // // apply voltage and air pressure compensation
-    // const float compensation_gain = thr_lin.get_compensation_gain(); // compensation for battery voltage and altitude
-    // roll_thrust = (_roll_in + _roll_in_ff) * compensation_gain;
-    // pitch_thrust = (_pitch_in + _pitch_in_ff) * compensation_gain;
-    // yaw_thrust = (_yaw_in + _yaw_in_ff) * compensation_gain;
-    // throttle_thrust = get_throttle() * compensation_gain;
-
-    // // scale horizontal thrust with throttle, this mimics a normal copter
-    // // so we don't break the lean angle proportional acceleration assumption made by the position controller
-    // forward_thrust = get_forward() * throttle_thrust;
-    // right_thrust = get_lateral() * throttle_thrust;
-
-
-    // // set throttle limit flags
-    // if (throttle_thrust <= 0) {
-    //     throttle_thrust = 0;
-    //     // we cant thrust down, the vehicle can do it, but it would break a lot of assumptions further up the control stack
-    //     // 1G decent probably plenty anyway....
-    //     limit.throttle_lower = true;
-    // }
-    // if (throttle_thrust >= 1) {
-    //     throttle_thrust = 1;
-    //     limit.throttle_upper = true;
-    // }
-
-    // // rotate the thrust into bodyframe
-    // Matrix3f rot;
-    // Vector3f thrust_vec;
-    // rot.from_euler312(_roll_offset, _pitch_offset, 0.0f);
+        // printf("force_ned \n\t%.3f, %.3f, %.3f\n",
+        //     static_cast<double>(force_ned[0]),
+        //     static_cast<double>(force_ned[1]),
+        //     static_cast<double>(force_ned[2]));
 
 
-    // /*
-    //     upwards thrust, independent of orientation
-    // */
-    // thrust_vec.x = 0.0f;
-    // thrust_vec.y = 0.0f;
-    // thrust_vec.z = throttle_thrust;
-    // thrust_vec = rot * thrust_vec;
-    // for (i = 0; i < AP_MOTORS_MAX_NUM_MOTORS; i++) {
-    //     if (motor_enabled[i]) {
-    //         _thrust_rpyt_out[i] =  thrust_vec.x * _forward_factor[i];
-    //         _thrust_rpyt_out[i] += thrust_vec.y * _right_factor[i];
-    //         _thrust_rpyt_out[i] += thrust_vec.z * _throttle_factor[i];
+        // printf("actuator_trim rad (tilt, nozzle) \n\t%.3f, %.3f\n\t%.3f, %.3f\n\t%.3f, %.3f\n\t%.3f, %.3f \n",
+        //     static_cast<double>(_actuator_trim_unnormalized[0]),
+        //     static_cast<double>(_actuator_trim_unnormalized[4]),
+        //     static_cast<double>(_actuator_trim_unnormalized[1]),
+        //     static_cast<double>(_actuator_trim_unnormalized[5]),
+        //     static_cast<double>(_actuator_trim_unnormalized[2]),
+        //     static_cast<double>(_actuator_trim_unnormalized[6]),
+        //     static_cast<double>(_actuator_trim_unnormalized[3]),
+        //     static_cast<double>(_actuator_trim_unnormalized[7]));
 
-    //         if (fabsf(_thrust_rpyt_out[i]) >= 1) {
-    //             // if we hit this the mixer is probably scaled incorrectly
-    //             limit.throttle_upper = true;
-    //         }
-    //         _thrust_rpyt_out[i] = constrain_float(_thrust_rpyt_out[i],-1.0f,1.0f);
-    //     }
-    // }
-
-
-    // /*
-    //     rotations: roll, pitch and yaw
-    // */
-    // float rpy_ratio = 1.0f;  // scale factor, output will be scaled by this ratio so it can all fit evenly
-    // float thrust[AP_MOTORS_MAX_NUM_MOTORS];
-    // for (i = 0; i < AP_MOTORS_MAX_NUM_MOTORS; i++) {
-    //     if (motor_enabled[i]) {
-    //         thrust[i] =  roll_thrust * _roll_factor[i];
-    //         thrust[i] += pitch_thrust * _pitch_factor[i];
-    //         thrust[i] += yaw_thrust * _yaw_factor[i];
-    //         float total_thrust = _thrust_rpyt_out[i] + thrust[i];
-    //         // control input will be limited by motor range
-    //         if (total_thrust > 1.0f) {
-    //             rpy_ratio = MIN(rpy_ratio,(1.0f - _thrust_rpyt_out[i]) / thrust[i]);
-    //         } else if (total_thrust < -1.0f) {
-    //             rpy_ratio = MIN(rpy_ratio,(-1.0f -_thrust_rpyt_out[i]) / thrust[i]);
-    //         }
-    //     }
-    // }
-
-    // // set limit flags if output is being scaled
-    // if (rpy_ratio < 1) {
-    //     limit.roll = true;
-    //     limit.pitch = true;
-    //     limit.yaw = true;
-    // }
-
-    // // scale back rotations evenly so it will all fit
-    // for (i = 0; i < AP_MOTORS_MAX_NUM_MOTORS; i++) {
-    //     if (motor_enabled[i]) {
-    //         _thrust_rpyt_out[i] = constrain_float(_thrust_rpyt_out[i] + thrust[i] * rpy_ratio,-1.0f,1.0f);
-    //     }
-    // }
-
-    // /*
-    //     forward and lateral, independent of orentaiton
-    // */
-    // thrust_vec.x = forward_thrust;
-    // thrust_vec.y = right_thrust;
-    // thrust_vec.z = 0.0f;
-    // thrust_vec = rot * thrust_vec;
-
-    // float horz_ratio = 1.0f; 
-    // for (i = 0; i < AP_MOTORS_MAX_NUM_MOTORS; i++) {
-    //     if (motor_enabled[i]) {
-    //         thrust[i] =  thrust_vec.x * _forward_factor[i];
-    //         thrust[i] += thrust_vec.y * _right_factor[i];
-    //         thrust[i] += thrust_vec.z * _throttle_factor[i];
-    //         float total_thrust = _thrust_rpyt_out[i] + thrust[i];
-    //         // control input will be limited by motor range
-    //         if (total_thrust > 1.0f) {
-    //             horz_ratio = MIN(horz_ratio,(1.0f - _thrust_rpyt_out[i]) / thrust[i]);
-    //         } else if (total_thrust < -1.0f) {
-    //             horz_ratio = MIN(horz_ratio,(-1.0f -_thrust_rpyt_out[i]) / thrust[i]);
-    //         }
-    //     }
-    // }
-
-    // // scale back evenly so it will all fit
-    // for (i = 0; i < AP_MOTORS_MAX_NUM_MOTORS; i++) {
-    //     if (motor_enabled[i]) {
-    //         _thrust_rpyt_out[i] = constrain_float(_thrust_rpyt_out[i] + thrust[i] * horz_ratio,-1.0f,1.0f);
-    //     }
-    // }
-
-    // for (i = 0; i < 4; i++) {
-    //     if (motor_enabled[i]) {
-    //         _thrust_rpyt_out[i] = (416 - 28.0) / (550.0 - 28.0);
-    //     }
-    // }
-
-    // /*
-    //     apply deadzone to revesible motors, this stops motors from reversing direction too often
-    //     re-use yaw headroom param for deadzone, constain to a max of 25%
-    // */
-    // const float deadzone = constrain_float(_yaw_headroom.get() * 0.001f,0.0f,0.0f);
-    // for (i = 0; i < AP_MOTORS_MAX_NUM_MOTORS; i++) {
-    //     if (motor_enabled[i] && _reversible[i]) {
-    //         if (is_negative(_thrust_rpyt_out[i])) {
-    //             if ((_thrust_rpyt_out[i] > -deadzone) && is_positive(_last_thrust_out[i])) {
-    //                 _thrust_rpyt_out[i] = 0.0f;
-    //             } else {
-    //                 _last_thrust_out[i] = _thrust_rpyt_out[i];
-    //             }
-    //         } else if (is_positive(_thrust_rpyt_out[i])) {
-    //             if ((_thrust_rpyt_out[i] < deadzone) && is_negative(_last_thrust_out[i])) {
-    //                 _thrust_rpyt_out[i] = 0.0f;
-    //             } else {
-    //                 _last_thrust_out[i] = _thrust_rpyt_out[i];
-    //             }
-    //         }
-    //     }
-    // }
+        // printf("torques needed \n\t%.3f, %.3f, %.3f,\nforces needed: \n\t%.3f, %.3f, %.3f\n",
+        //     static_cast<double>(control_needed_after_trim[0]),
+        //     static_cast<double>(control_needed_after_trim[1]),
+        //     static_cast<double>(control_needed_after_trim[2]),
+        //     static_cast<double>(control_needed_after_trim[3]),
+        //     static_cast<double>(control_needed_after_trim[4]),
+        //     static_cast<double>(control_needed_after_trim[5]));
+    #endif
 
 }
 
@@ -566,6 +386,7 @@ bool AP_MotorsMatrix_6DoF_Scripting::init(uint8_t expected_num_motors) {
             _mav_type = MAV_TYPE_GENERIC;
     }
 
+    // EVADE Initialization
     nominal_tilt_[0] = DEG2RAD*TILT0;
 	nominal_tilt_[1] = -DEG2RAD*TILT0;
 	nominal_tilt_[2] = DEG2RAD*TILT0;
