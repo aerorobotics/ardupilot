@@ -756,7 +756,8 @@ bool QuadPlane::setup(void)
     case AP_Motors::MOTOR_FRAME_6DOF_SCRIPTING:
 #if AP_SCRIPTING_ENABLED
         motors = NEW_NOTHROW AP_MotorsMatrix_6DoF_Scripting(plane.scheduler.get_loop_rate_hz());
-        motors_var_info = AP_MotorsMatrix_6DoF_Scripting::var_info;
+        motors_var_info = AP_MotorsMatrix::var_info;
+        // motors_var_info = AP_MotorsMatrix_6DoF_Scripting::var_info;
 #endif // AP_SCRIPTING_ENABLED
         break;
     default:
