@@ -576,16 +576,7 @@ void AP_MotorsMulticopter::output_logic()
         }
 
         case DesiredSpoolState::THROTTLE_UNLIMITED: {
-            const float spool_step = _dt_s / _spool_up_time;
-            _spin_up_ratio += spool_step;
-            // constrain ramp value and update mode
-            if (_spin_up_ratio >= 1.0f) {
-                _spin_up_ratio = 1.0f;
-                if (!get_spoolup_block()) {
-                    // Only advance from ground idle if spoolup checks have passed
-                    _spool_state = SpoolState::SPOOLING_UP;
-                }
-            }
+            _spool_state = SpoolState::SPOOLING_UP;
             break;
         }
         case DesiredSpoolState::GROUND_IDLE: {
@@ -621,16 +612,12 @@ void AP_MotorsMulticopter::output_logic()
             break;
         }
 
-        // set and increment ramp variables
-        _spin_up_ratio = 1.0f;
-        _throttle_thrust_max += spool_step;
-
-        // constrain ramp value and update mode
-        if (_throttle_thrust_max >= MIN(get_throttle(), get_current_limit_max_throttle())) {
-            _throttle_thrust_max = get_current_limit_max_throttle();
-            _spool_state = SpoolState::THROTTLE_UNLIMITED;
-        } else if (_throttle_thrust_max < 0.0f) {
-            _throttle_thrust_max = 0.0f;
+        _spin_up_ratio += spool_step;
+        if (_spin_up_ratio >= 1.0f) {
+            _spin_up_ratio = 1.0f;
+            if (!get_spoolup_block()) {
+                _spool_state = SpoolState::THROTTLE_UNLIMITED;
+            }
         }
 
         // initialise motor failure variables

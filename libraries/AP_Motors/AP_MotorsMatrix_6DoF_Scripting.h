@@ -37,6 +37,8 @@ public:
     // if the expected number of motors have been setup then set as initalized
     bool init(uint8_t expected_num_motors) override;
 
+    static const struct AP_Param::GroupInfo        var_info[];
+
 protected:
     // output - sends commands to the motors
     void output_armed_stabilizing() override;
@@ -58,6 +60,66 @@ protected:
     // Current offset angles, radians
     float _roll_offset;
     float _pitch_offset;
+
+    // EVADE
+    static constexpr int n_thrusters_ = 4;
+    static constexpr int n_servos_ = 8;
+	static constexpr int n_outputs_ = 6;
+    static constexpr float DEG2RAD = 3.14159265f / 180.0f;
+
+    AP_Float _tilt0;
+	AP_Float _nozzle0;
+	AP_Float _fixed_pivot0;
+
+    AP_Float _thrust_max;
+    AP_Float _thrust_idle;
+    AP_Float _mass;
+
+    AP_Float _fx_scale;
+    AP_Float _fy_scale;
+    AP_Float _fz_scale;
+    AP_Float _mx_scale;
+    AP_Float _my_scale;
+    AP_Float _mz_scale;
+
+    AP_Float _sv_tl0_max_a;
+    AP_Float _sv_tl1_max_a;
+    AP_Float _sv_tl2_max_a;
+    AP_Float _sv_tl3_max_a;
+    AP_Float _sv_tl4_max_a;
+    AP_Float _sv_tl5_max_a;
+    AP_Float _sv_tl6_max_a;
+    AP_Float _sv_tl7_max_a;
+    AP_Float _sv_tl0_min_a;
+    AP_Float _sv_tl1_min_a;
+    AP_Float _sv_tl2_min_a;
+    AP_Float _sv_tl3_min_a;
+    AP_Float _sv_tl4_min_a;
+    AP_Float _sv_tl5_min_a;
+    AP_Float _sv_tl6_min_a;
+    AP_Float _sv_tl7_min_a;
+
+
+    float nominal_tilt_[n_thrusters_];
+	float nominal_nozzle_[n_thrusters_];
+	float fixed_pivot_[n_thrusters_];
+	float tilt_min_[n_thrusters_];
+	float tilt_max_[n_thrusters_];
+	float nozzle_min_[n_thrusters_];
+	float nozzle_max_[n_thrusters_];
+	float nominal_thrust_[n_thrusters_];
+
+    // Allocation matrix (mixer) 
+    float _mix[n_servos_][n_outputs_] = {
+        {0.000840    ,    0.000000    ,    0.000198    ,    -0.000581   ,    0.000623   ,   0.000796 },
+        {-0.000840   ,    0.000000    ,    0.000198    ,    -0.000581   ,    -0.000623  ,   -0.000796},
+        {-0.000840   ,    -0.000000   ,    -0.000198   ,    -0.000581   ,    -0.000623  ,   0.000796 },
+        {0.000840    ,    -0.000000   ,    -0.000198   ,    -0.000581   ,    0.000623   ,   -0.000796},
+        {-0.000105   ,    0.001152    ,    0.000140    ,    -0.000652   ,    0.000503   ,   -0.000847},
+        {-0.000105   ,    -0.001152   ,    -0.000140   ,    0.000652    ,    0.000503   ,   -0.000847},
+        {-0.000105   ,    -0.001152   ,    0.000140    ,    0.000652    ,    0.000503   ,   0.000847 },
+        {-0.000105   ,    0.001152    ,    -0.000140   ,    -0.000652   ,    0.000503   ,   0.000847 }
+    };
 
 private:
     static AP_MotorsMatrix_6DoF_Scripting *_singleton;
